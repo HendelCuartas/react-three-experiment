@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './styles/index.styl';
-import { TweenMax } from "gsap/all";
+import { TweenMax, Power2 } from "gsap/all";
 
 class App extends React.Component {
     constructor(props){
@@ -11,13 +11,13 @@ class App extends React.Component {
     }
 
     componentDidMount(){
-        TweenMax.fromTo(this.title, 0.5, {opacity: 0, y: -40}, {opacity: 1, y: 0})
+        TweenMax.fromTo(this.title, 0.5, {opacity: 0, y: -40}, {opacity: 1, y: 0, ease: Power2.easeIn})
     }
 
     render() {
         return (
             <div className="Home">
-                <p ref={ p => this.title = p }>Hello there!</p>
+                <h1 ref={ h1 => this.title = h1 }>Hello there!</h1>
             </div>
         );
     }

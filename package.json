@@ -1,0 +1,50 @@
+{
+  "name": "react-boilerplate",
+  "version": "1.0.0",
+  "description": "React Project Setup.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --config ./webpack.config.js --mode development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HendelCuartas/react-boilerplate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/HendelCuartas/react-boilerplate/issues"
+  },
+  "homepage": "https://github.com/HendelCuartas/react-boilerplate#readme",
+  "devDependencies": {
+    "@babel/core": "^7.1.6",
+    "@babel/preset-env": "^7.1.6",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.4",
+    "css-loader": "^1.0.1",
+    "react-hot-loader": "^4.3.12",
+    "style-loader": "^0.23.1",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.2",
+    "webpack": "^4.26.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "dependencies": {
+    "lost": "^8.3.0",
+    "nib": "^1.1.2",
+    "poststylus": "^1.0.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "rucksack-css": "^1.0.2",
+    "rupture": "^0.7.1"
+  }
+}

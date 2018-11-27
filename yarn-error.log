@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/Cellar/node/11.2.0/bin/node /usr/local/Cellar/yarn/1.12.3/libexec/bin/yarn.js dev
+  /usr/local/Cellar/node/11.2.0/bin/node /usr/local/Cellar/yarn/1.12.3/libexec/bin/yarn.js install
 
 PATH: 
   /Users/foo/.composer/vendor/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin

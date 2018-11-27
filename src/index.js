@@ -10,6 +10,10 @@ class App extends React.Component {
         this.title = null;
     }
 
+    componentDidMount(){
+        TweenMax.fromTo(this.title, 0.5, {opacity: 0, y: -40}, {opacity: 1, y: 0})
+    }
+
     render() {
         return (
             <div className="Home">

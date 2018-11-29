@@ -2,13 +2,9 @@
 React Project Setup (stylus, Babel). Note that all dependencies that you include should be included manually when configuring your project.
 
 # Install
-With npm:
+
 ```
 npm install
-```
-With yarn:
-```
-yarn install
 ```
 
 # Development

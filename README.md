@@ -11,7 +11,6 @@ With yarn:
 ```
 yarn install
 ```
-
 # Development
 With npm:
 ```

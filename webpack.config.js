@@ -24,7 +24,7 @@ module.exports = {
         extensions: ['*', '.js', '.jsx']
     },
     output: {
-        path: __dirname + '/dist',
+        path: __dirname + '/docs',
         publicPath: '/',
         filename: 'bundle.js'
     },
@@ -51,7 +51,7 @@ module.exports = {
       })
     ],
     devServer: {
-        contentBase: './dist',
+        contentBase: './docs',
         port: '8888'
     }
 };

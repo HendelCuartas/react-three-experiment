@@ -21,7 +21,7 @@ With yarn:
 yarn dev
 ```
 
-This will run at localhost:8888
+This will run at localhost:9999
 
 # Stylus
 http://stylus-lang.com/

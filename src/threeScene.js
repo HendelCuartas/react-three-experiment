@@ -1,57 +1,122 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
+import Button from './components/Button';
 
 class ThreeScene extends Component {
-    componentDidMount() {
-        const width = this.mount.clientWidth
-        const height = this.mount.clientHeight
-        //ADD SCENE
-        this.scene = new THREE.Scene()
-        //ADD CAMERA
-        this.camera = new THREE.PerspectiveCamera(
-        75,
-        width / height,
-        0.1,
-        1000
-        )
-        this.camera.position.z = 10
-        //ADD RENDERER
-        this.renderer = new THREE.WebGLRenderer({ antialias: true })
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.setClearColor('#000000')
-        this.renderer.setSize(width, height)
-        this.mount.appendChild(this.renderer.domElement)
-        //ADD LIGHT
-        //Create a PointLight and turn on shadows for the light
-        var light = new THREE.PointLight( 0xffffff, 1, 100 );
-        light.position.set( 0, 10, 10 );
-        light.castShadow = true;            // default false
-        this.scene.add( light );
 
-        //Set up shadow properties for the light
-        light.shadow.mapSize.width = 1080;  // default
-        light.shadow.mapSize.height = 1080; // default
-        light.shadow.camera.near = 0.5;       // default
-        light.shadow.camera.far = 1000      // default
-        //ADD CUBE
-        const geometry = new THREE.SphereGeometry(1, 15, 15)
-        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 })
-        this.cube = new THREE.Mesh(geometry, material)
-        this.cube.receiveShadow = true
-        this.scene.add(this.cube)
-        this.velocity = new THREE.Vector3(0, 0, 0)
-        this.acceleration = new THREE.Vector3(0, 0, 0)
-        this.gravity = new THREE.Vector3(0, -0.01, 0)
-        this.wind = new THREE.Vector3(0.5, 0, 0)
-        //ADD PLANE
-        var geometryPlaneDown = new THREE.PlaneGeometry( 50, 50, 2 );
-        var materialPlaneDown = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-        var planeDown = new THREE.Mesh( geometryPlaneDown, materialPlaneDown );
-        this.scene.add( planeDown );
-        this.start()
-        document.addEventListener('mousedown', () => {
-            this.applyForceSphere(this.wind);
-        })
+    // GLOBAL VARIABLES SETUP
+    mouse = {x: 0, y: 0};
+    velocity = new THREE.Vector3(0, 0, 0);
+    acceleration = new THREE.Vector3(0, 0, 0);
+    gravity = new THREE.Vector3(0, -0.1, 0);
+    wind = new THREE.Vector3(1, 0, 0);
+    isGravity = false;
+    isWind = false;
+
+    componentDidMount() {
+        this.setupScene();
+        this.setupCamera();
+        this.createLight();
+        this.createRandomSphere();
+        this.setupRenderer();
+        this.animate();
+        window.addEventListener( 'resize', this.onWindowResize, false );
+        document.addEventListener('mousemove', this.onMouseMove, false);
+    }
+
+    setupCamera () {
+        this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+        this.camera.position.z = 1000;
+        this.camera.lookAt(this.scene.position);
+    }
+
+    setupScene() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color( 0xf0f0f0 );
+        this.scene.add( new THREE.AmbientLight( 0x505050 ) );
+    }
+
+    setupRenderer() {
+        this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+        this.renderer.setPixelRatio( window.devicePixelRatio );
+        this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFShadowMap;
+        this.mount.appendChild(this.renderer.domElement);
+    }
+
+    createLight() {
+        var light = new THREE.SpotLight( 0xffffff, 1.5 );
+        light.position.set( 0, 500, 2000 );
+        light.angle = Math.PI / 9;
+        light.castShadow = true;
+        light.shadow.camera.near = 1000;
+        light.shadow.camera.far = 4000;
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        this.scene.add( light );
+    }
+
+    createRandomSphere() {
+        var geometry = new THREE.SphereGeometry( 5, 32, 32 );
+        this.sphere = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+        this.sphere.position.x = Math.random() * 1000 - 500;
+        this.sphere.position.y = Math.random() * 600 - 300;
+        this.sphere.position.z = 450;
+        this.sphere.rotation.x = Math.random() * 2 * Math.PI;
+        this.sphere.rotation.y = Math.random() * 2 * Math.PI;
+        this.sphere.rotation.z = Math.random() * 2 * Math.PI;
+        var scale = 6;
+        this.sphere.scale.set(scale, scale, scale);
+        this.sphere.receiveShadow = true;
+        this.scene.add( this.sphere );
+    }
+
+    // Follows the mouse event
+    onMouseMove = (event) => {
+        // Update the mouse variable
+        //event.preventDefault();
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        var vector = new THREE.Vector3(this.mouse.x, this.mouse.y, 0.5);
+        vector.unproject( this.camera );
+        var dir = vector.sub( this.camera.position ).normalize();
+        // var distance = - this.camera.position.z / dir.z;
+        var distance = ( this.sphere.position.z - this.camera.position.z ) / vector.z;
+        var pos = this.camera.position.clone().add( dir.multiplyScalar( distance ) );
+        this.mouseInCanvas = pos
+    };
+
+    onButtonClick = (target) => {
+        switch(target) {
+            case 'GRAVITY':
+                this.isGravity = !this.isGravity;
+                if (this.isGravity === false) {
+                    this.acceleration = new THREE.Vector3(0, 0, 0);
+                    this.velocity = new THREE.Vector3(0, 0, 0);
+                }
+                break;
+            case 'WIND':
+                this.isWind = !this.isWind;
+                if (this.isWind === false) {
+                    this.acceleration = new THREE.Vector3(0, 0, 0);
+                    this.velocity = new THREE.Vector3(0, 0, 0);
+                }
+                break;
+            case 'SEEK':
+                this.isSeek = !this.isSeek;
+                if (this.isSeek === false) {
+                    this.acceleration = new THREE.Vector3(0, 0, 0);
+                    this.velocity = new THREE.Vector3(0, 0, 0);
+                }
+                break;
+        }
+    }
+
+    onWindowResize = () => {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize( window.innerWidth, window.innerHeight );
     }
 
     applyForceSphere = (force) => {
@@ -60,22 +125,34 @@ class ThreeScene extends Component {
 
     updateSphere = () => {
         this.velocity.add(this.acceleration)
-        this.cube.position.add(this.velocity)
+        this.sphere.position.add(this.velocity)
         this.acceleration.multiplyScalar(0)
     }
 
+    seekVector = (target) => {
+        console.log(target)
+        var desired = target.sub(this.sphere.position);
+        var desiredSetMag = this.setMagnitude(desired, 8);
+        var steering = desiredSetMag.sub(this.velocity);
+        this.applyForceSphere(steering);
+    }
+
+    setMagnitude = function(vect, magnitude) {
+        return vect.normalize().multiplyScalar(magnitude);
+    };
+
     edgesSphere = () => {
-        if (this.cube.position.y < -7) {
+        if (this.sphere.position.y < -(window.innerHeight / 2)) {
             this.velocity.y *= -1
-            this.cube.position.y = -7;
+            this.sphere.position.y = -(window.innerHeight / 2);
         }
-        if (this.cube.position.x > 12) {
+        if (this.sphere.position.x > window.innerWidth / 2) {
             this.velocity.x *= -1
-            this.cube.position.x = 12;
+            this.sphere.position.x = window.innerWidth / 2;
         }
-        if (this.cube.position.x < -12) {
+        if (this.sphere.position.x < -(window.innerWidth / 2)) {
             this.velocity.x *= -1
-            this.cube.position.x = -12;
+            this.sphere.position.x = -(window.innerWidth / 2);
         }
     }
 
@@ -95,11 +172,22 @@ class ThreeScene extends Component {
     }
 
     animate = () => {
-        //this.cube.rotation.x += 0.01
-        //this.cube.rotation.y += 0.01
-        this.applyForceSphere(this.gravity)
+        //this.sphere.rotation.x += 0.01
+        //this.sphere.rotation.y += 0.01
+        if (this.isGravity) {
+            this.applyForceSphere(this.gravity)
+        }
+        if (this.isWind) {
+            this.applyForceSphere(this.wind)
+        }
+        if (this.isSeek) {
+            this.seekVector(this.mouseInCanvas);
+        }
+        //this.seekVector(this.mousePosition)
+        if (this.isGravity | this.isWind) {
+            this.edgesSphere()
+        }
         this.updateSphere()
-        this.edgesSphere()
         this.renderScene()
         this.frameId = window.requestAnimationFrame(this.animate)
     }
@@ -110,11 +198,15 @@ class ThreeScene extends Component {
 
     render() {
         return(
-        <div
-            style={{ width: `${window.innerWidth}px`, height: `${window.innerHeight}px` }}
-            ref={(mount) => { this.mount = mount }}
-        />
-        )
+            <div
+                style={{ width: `${window.innerWidth}px`, height: `${window.innerHeight}px` }}
+                ref={(mount) => { this.mount = mount }}
+            >
+                <Button name="GRAVITY" top="5" left="2.5" btnClicked={this.onButtonClick}></Button>
+                <Button name="WIND" top="5" left="15" btnClicked={this.onButtonClick}></Button>
+                <Button name="SEEK" top="5" left="27.6" btnClicked={this.onButtonClick}></Button>
+            </div>
+        );
     }
 }
 export default ThreeScene

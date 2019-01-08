@@ -42,7 +42,7 @@
     "stylus-loader": "^3.0.2",
     "webpack": "^4.26.1",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "3.1.11"
+    "webpack-dev-server": "3.1.14"
   },
   "dependencies": {
     "gsap": "^2.0.2",

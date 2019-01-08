@@ -8,20 +8,42 @@ class ThreeScene extends Component {
     mouse = {x: 0, y: 0};
     velocity = new THREE.Vector3(0, 0, 0);
     acceleration = new THREE.Vector3(0, 0, 0);
-    gravity = new THREE.Vector3(0, -0.1, 0);
-    wind = new THREE.Vector3(1, 0, 0);
+    gravity = new THREE.Vector3(0, -1, 0);
+    wind = new THREE.Vector3(0.8, 0, 0);
     isGravity = false;
     isWind = false;
+    maxSpeed = 6;
+    maxForce = 0.5;
 
     componentDidMount() {
         this.setupScene();
         this.setupCamera();
         this.createLight();
-        this.createRandomSphere();
+        this.createRandomCone();
         this.setupRenderer();
         this.animate();
         window.addEventListener( 'resize', this.onWindowResize, false );
         document.addEventListener('mousemove', this.onMouseMove, false);
+    }
+
+    magSq = (vector) => {
+        var x = vector.x;
+        var y = vector.y;
+        var z = vector.z;
+        return x * x + y * y + z * z;
+    }
+
+    limit = (vector, max) => {
+        var mSq = this.magSq(vector);
+        if (mSq > max * max) {
+            vector.normalize().multiplyScalar(max);
+        }
+        return vector;
+    }
+
+    heading = function heading(vector) {
+        var h = Math.atan2(vector.y, vector.x);
+        return h;
     }
 
     setupCamera () {
@@ -57,32 +79,32 @@ class ThreeScene extends Component {
         this.scene.add( light );
     }
 
-    createRandomSphere() {
-        var geometry = new THREE.SphereGeometry( 5, 32, 32 );
-        this.sphere = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-        this.sphere.position.x = Math.random() * 1000 - 500;
-        this.sphere.position.y = Math.random() * 600 - 300;
-        this.sphere.position.z = 450;
-        this.sphere.rotation.x = Math.random() * 2 * Math.PI;
-        this.sphere.rotation.y = Math.random() * 2 * Math.PI;
-        this.sphere.rotation.z = Math.random() * 2 * Math.PI;
+    createRandomCone() {
+        var geometry = new THREE.ConeGeometry( 3, 20, 20 );
+        this.cone = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+        this.cone.position.x = Math.random() * 1000 - 500;
+        this.cone.position.y = Math.random() * 600 - 300;
+        this.cone.position.z = 450;
+        this.cone.rotation.x = Math.random() * 2 * Math.PI;
+        this.cone.rotation.y = Math.random() * 2 * Math.PI;
+        this.cone.rotation.z = Math.random() * 2 * Math.PI;
         var scale = 6;
-        this.sphere.scale.set(scale, scale, scale);
-        this.sphere.receiveShadow = true;
-        this.scene.add( this.sphere );
+        this.cone.scale.set(scale, scale, scale);
+        this.cone.receiveShadow = true;
+        this.scene.add( this.cone );
     }
 
     // Follows the mouse event
     onMouseMove = (event) => {
         // Update the mouse variable
-        //event.preventDefault();
+        event.preventDefault();
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
         var vector = new THREE.Vector3(this.mouse.x, this.mouse.y, 0.5);
         vector.unproject( this.camera );
         var dir = vector.sub( this.camera.position ).normalize();
         // var distance = - this.camera.position.z / dir.z;
-        var distance = ( this.sphere.position.z - this.camera.position.z ) / vector.z;
+        var distance = ( this.cone.position.z - this.camera.position.z ) / vector.z;
         var pos = this.camera.position.clone().add( dir.multiplyScalar( distance ) );
         this.mouseInCanvas = pos
     };
@@ -125,16 +147,20 @@ class ThreeScene extends Component {
 
     updateSphere = () => {
         this.velocity.add(this.acceleration)
-        this.sphere.position.add(this.velocity)
+        this.cone.position.add(this.velocity)
         this.acceleration.multiplyScalar(0)
+        var angle = this.heading(this.velocity.clone()) * Math.PI / 2
+        this.cone.rotation.setFromVector3(new THREE.Vector3(0, 0, angle))
+        this.cone.updateMatrixWorld()
     }
 
     seekVector = (target) => {
-        console.log(target)
-        var desired = target.sub(this.sphere.position);
-        var desiredSetMag = this.setMagnitude(desired, 8);
+        var targetPos = target.clone();
+        var desired = targetPos.sub(this.cone.position);
+        var desiredSetMag = this.setMagnitude(desired, this.maxSpeed);
         var steering = desiredSetMag.sub(this.velocity);
-        this.applyForceSphere(steering);
+        var steeringLimited = this.limit(steering, this.maxForce)
+        this.applyForceSphere(steeringLimited);
     }
 
     setMagnitude = function(vect, magnitude) {
@@ -142,17 +168,17 @@ class ThreeScene extends Component {
     };
 
     edgesSphere = () => {
-        if (this.sphere.position.y < -(window.innerHeight / 2)) {
+        if (this.cone.position.y < -(window.innerHeight / 2)) {
             this.velocity.y *= -1
-            this.sphere.position.y = -(window.innerHeight / 2);
+            this.cone.position.y = -(window.innerHeight / 2);
         }
-        if (this.sphere.position.x > window.innerWidth / 2) {
+        if (this.cone.position.x > window.innerWidth / 2) {
             this.velocity.x *= -1
-            this.sphere.position.x = window.innerWidth / 2;
+            this.cone.position.x = window.innerWidth / 2;
         }
-        if (this.sphere.position.x < -(window.innerWidth / 2)) {
+        if (this.cone.position.x < -(window.innerWidth / 2)) {
             this.velocity.x *= -1
-            this.sphere.position.x = -(window.innerWidth / 2);
+            this.cone.position.x = -(window.innerWidth / 2);
         }
     }
 
@@ -172,8 +198,8 @@ class ThreeScene extends Component {
     }
 
     animate = () => {
-        //this.sphere.rotation.x += 0.01
-        //this.sphere.rotation.y += 0.01
+        //this.cone.rotation.x += 0.01
+        //this.cone.rotation.y += 0.01
         if (this.isGravity) {
             this.applyForceSphere(this.gravity)
         }
@@ -187,7 +213,9 @@ class ThreeScene extends Component {
         if (this.isGravity | this.isWind) {
             this.edgesSphere()
         }
-        this.updateSphere()
+        if (this.isGravity | this.isWind | this.isSeek) {
+            this.updateSphere()
+        }
         this.renderScene()
         this.frameId = window.requestAnimationFrame(this.animate)
     }
